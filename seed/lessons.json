@@ -1,0 +1,157 @@
+[
+  {
+    "title": "I have / I like",
+    "description": "Тренировка простых фраз с have и like.",
+    "target_phrases": [
+      "I have a pillow.",
+      "I like sleep.",
+      "I have data.",
+      "I like logic."
+    ],
+    "examples": [
+      "I have a book.",
+      "I like cats.",
+      "I have homework.",
+      "I don't like homework."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "Present Simple",
+    "description": "Простые регулярные действия и привычки.",
+    "target_phrases": [
+      "I go to school.",
+      "She likes tea.",
+      "He sleeps in class."
+    ],
+    "examples": [
+      "We study English.",
+      "They play after class.",
+      "BORTO sleeps a lot."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "To be: I am / You are / This is",
+    "description": "Базовые конструкции с глаголом to be.",
+    "target_phrases": [
+      "I am tired.",
+      "You are late.",
+      "This is my book."
+    ],
+    "examples": [
+      "This is a monster.",
+      "You are my friend.",
+      "I am in class."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "Adjectives",
+    "description": "Описание предметов и персонажей с помощью прилагательных.",
+    "target_phrases": [
+      "The room is dark.",
+      "This soup is weird.",
+      "My bag is heavy."
+    ],
+    "examples": [
+      "The cat is cute.",
+      "The lesson is boring.",
+      "The tower is creepy."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "There is / There are",
+    "description": "Описание наличия объектов в сцене.",
+    "target_phrases": [
+      "There is a ghost in the hall.",
+      "There are books on the desk."
+    ],
+    "examples": [
+      "There is a chair here.",
+      "There are students outside."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "Can / Can't",
+    "description": "Умения и запреты.",
+    "target_phrases": [
+      "I can run.",
+      "I can't swim.",
+      "Can you help me?"
+    ],
+    "examples": [
+      "BLAZE can shout loudly.",
+      "DATA can't stop analyzing."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "Want / Need",
+    "description": "Выражение желаний и потребностей.",
+    "target_phrases": [
+      "I want tea.",
+      "I need sleep.",
+      "Do you need help?"
+    ],
+    "examples": [
+      "We want a break.",
+      "He needs a pencil."
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  },
+  {
+    "title": "Questions with Do / Does",
+    "description": "Простые вопросы и краткие ответы.",
+    "target_phrases": [
+      "Do you like pizza?",
+      "Does she study here?",
+      "Do they have homework?"
+    ],
+    "examples": [
+      "Do you know this word?",
+      "Does BORTO sleep now?"
+    ],
+    "difficulty_level": "elementary",
+    "is_active": 1
+  },
+  {
+    "title": "Prepositions of place",
+    "description": "Описание положения объектов в пространстве.",
+    "target_phrases": [
+      "The book is on the table.",
+      "The bag is under the chair.",
+      "The ghost is behind the door."
+    ],
+    "examples": [
+      "The pencil is in the box.",
+      "The cat is next to me."
+    ],
+    "difficulty_level": "elementary",
+    "is_active": 1
+  },
+  {
+    "title": "Simple classroom phrases",
+    "description": "Полезные фразы для общения на уроке.",
+    "target_phrases": [
+      "Can you repeat, please?",
+      "I don't understand.",
+      "May I open the window?"
+    ],
+    "examples": [
+      "How do you say this in English?",
+      "Can I go out?"
+    ],
+    "difficulty_level": "beginner",
+    "is_active": 1
+  }
+]

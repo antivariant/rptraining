@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inline Spellcheck</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: Inter, sans-serif;
+      }
+      .wrapper {
+        width: 100%;
+        position: relative;
+      }
+      .backdrop,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 1rem;
+        padding: 1rem 1.1rem;
+        font: 400 1rem/1.55 Inter, sans-serif;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+      .backdrop {
+        position: absolute;
+        inset: 0;
+        border: 1px solid rgba(250, 250, 250, 0.2);
+        background: rgba(38, 39, 48, 1);
+        color: rgb(250, 250, 250);
+        pointer-events: none;
+        user-select: none;
+        overflow: hidden;
+      }
+      textarea {
+        position: relative;
+        resize: vertical;
+        border: 1px solid rgba(250, 250, 250, 0.2);
+        background: transparent;
+        color: transparent;
+        caret-color: rgb(250, 250, 250);
+        outline: none;
+      }
+      textarea:focus {
+        border-color: rgb(255, 75, 75);
+        box-shadow: 0 0 0 1px rgb(255, 75, 75);
+      }
+      textarea:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+      mark.typo {
+        background: rgba(255, 75, 75, 0.18);
+        color: rgb(250, 250, 250);
+        text-decoration: underline wavy #ff4b4b;
+        text-underline-offset: 0.18em;
+        border-radius: 0.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div id="backdrop" class="backdrop"></div>
+      <textarea id="editor" spellcheck="true" lang="ru-RU" autocorrect="on" autocapitalize="off"></textarea>
+    </div>
+    <script>
+      const textarea = document.getElementById("editor");
+      const backdrop = document.getElementById("backdrop");
+      let renderData = {};
+      let debounceId = null;
+      let hasRendered = false;
+      let readySent = false;
+      let readyInterval = null;
+      let localValue = "";
+      let isDirty = false;
+      let lastCommittedValue = "";
+      let isFocused = false;
+      let typoWords = [];
+      let hasInitialValue = false;
+
+      function sendMessage(type, payload = {}) {
+        window.parent.postMessage({ isStreamlitMessage: true, type, ...payload }, "*");
+      }
+
+      function setFrameHeight() {
+        const height = Math.max(document.body.scrollHeight, textarea.offsetHeight);
+        sendMessage("streamlit:setFrameHeight", { height });
+      }
+
+      function escapeHtml(value) {
+        return value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function renderBackdrop() {
+        const escaped = escapeHtml(textarea.value || "").replace(/\n/g, "<br/>");
+        if (!escaped) {
+          backdrop.innerHTML = "&nbsp;";
+          return;
+        }
+        if (!typoWords.length) {
+          backdrop.innerHTML = escaped;
+          return;
+        }
+        const alternatives = typoWords
+          .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+          .sort((a, b) => b.length - a.length)
+          .join("|");
+        const pattern = new RegExp(`(^|[^\\p{L}\\p{N}_])(${alternatives})(?=$|[^\\p{L}\\p{N}_])`, "gu");
+        backdrop.innerHTML = escaped.replace(pattern, '$1<mark class="typo">$2</mark>');
+      }
+
+      function syncScroll() {
+        backdrop.scrollTop = textarea.scrollTop;
+        backdrop.scrollLeft = textarea.scrollLeft;
+      }
+
+      function setValue(value) {
+        lastCommittedValue = value;
+        sendMessage("streamlit:setComponentValue", { value, dataType: "json" });
+      }
+
+      function applyRender(args) {
+        hasRendered = true;
+        stopReadyLoop();
+        renderData = args || {};
+        const nextValue = renderData.value || "";
+        const nextHeight = Number(renderData.height || 180);
+        typoWords = Array.isArray(renderData.typo_words) ? renderData.typo_words : [];
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        textarea.disabled = !!renderData.disabled;
+        textarea.setAttribute("aria-label", renderData.label || "Spellcheck editor");
+        textarea.placeholder = renderData.placeholder || "";
+        textarea.style.minHeight = `${nextHeight}px`;
+        textarea.style.height = `${nextHeight}px`;
+        backdrop.style.minHeight = `${nextHeight}px`;
+        backdrop.style.height = `${nextHeight}px`;
+        textarea.spellcheck = true;
+        textarea.lang = "ru-RU";
+
+        const externalMatchesLocal = nextValue === localValue;
+        const externalMatchesCommitted = nextValue === lastCommittedValue;
+        const shouldApplyExternalValue =
+          !hasInitialValue ||
+          externalMatchesLocal ||
+          externalMatchesCommitted ||
+          (!isDirty && !isFocused);
+
+        if (shouldApplyExternalValue && textarea.value !== nextValue) {
+          textarea.value = nextValue;
+          localValue = nextValue;
+          hasInitialValue = true;
+          if (isFocused) {
+            try {
+              textarea.setSelectionRange(start, end);
+            } catch (e) {}
+          }
+        }
+        if (externalMatchesLocal || externalMatchesCommitted) {
+          isDirty = false;
+          lastCommittedValue = nextValue;
+        }
+
+        renderBackdrop();
+        syncScroll();
+        setFrameHeight();
+      }
+
+      function sendReady() {
+        sendMessage("streamlit:componentReady", { apiVersion: 1 });
+        readySent = true;
+      }
+
+      function stopReadyLoop() {
+        if (readyInterval) {
+          window.clearInterval(readyInterval);
+          readyInterval = null;
+        }
+      }
+
+      function startReadyLoop() {
+        sendReady();
+        stopReadyLoop();
+        readyInterval = window.setInterval(() => {
+          if (hasRendered) {
+            stopReadyLoop();
+            return;
+          }
+          sendReady();
+        }, 250);
+      }
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (!message || message.type !== "streamlit:render") return;
+        applyRender(message.args || {});
+      });
+
+      textarea.addEventListener("input", () => {
+        localValue = textarea.value;
+        isDirty = true;
+        renderBackdrop();
+        syncScroll();
+        window.clearTimeout(debounceId);
+        debounceId = window.setTimeout(() => {
+          if (textarea.value === lastCommittedValue) {
+            return;
+          }
+          setValue(textarea.value);
+          setFrameHeight();
+        }, 120);
+      });
+
+      textarea.addEventListener("focus", () => {
+        isFocused = true;
+        setFrameHeight();
+      });
+      textarea.addEventListener("blur", () => {
+        isFocused = false;
+        localValue = textarea.value;
+        setValue(textarea.value);
+        renderBackdrop();
+        syncScroll();
+        setFrameHeight();
+      });
+      textarea.addEventListener("scroll", syncScroll);
+      document.addEventListener("DOMContentLoaded", () => {
+        startReadyLoop();
+        setFrameHeight();
+      });
+      window.addEventListener("load", () => {
+        if (!readySent) {
+          startReadyLoop();
+        }
+        setFrameHeight();
+      });
+      startReadyLoop();
+      setFrameHeight();
+    </script>
+  </body>
+</html>
